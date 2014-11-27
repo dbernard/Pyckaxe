@@ -35,7 +35,6 @@ more information on creating a new application, see [here](https://dev.twitter.c
 TODO
 ----
 
-1. Take search terms as arguments
-2. (Optional) Take collection time as argument
-3. (Optional) Take database name as argument
-4. Script/function for clearing database.
+1. (Optional) Take collection time as argument
+2. Script/function for clearing database.
+3. Clean up directory structure.
