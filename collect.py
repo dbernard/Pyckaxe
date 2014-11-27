@@ -85,4 +85,4 @@ if __name__ == '__main__':
     try:
         runtime = collect()
     except KeyboardInterrupt:
-        print 'Exiting.'
+        print '\nExiting.'
