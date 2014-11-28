@@ -16,9 +16,8 @@ class CollectionDatabase(object):
         self.cursor = self.conn.cursor()
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS tweets (
                                 id INTEGER,
-                                fav_count INTEGER,
-                                retweets INTEGER,
                                 text TEXT,
+                                created_at TEXT,
                                 coords TEXT)''')
         self.conn.commit()
 
@@ -29,7 +28,7 @@ class CollectionDatabase(object):
     def add(self, data):
         # Add tweet data to our database. Error if we can't save a tweet
         try:
-            self.cursor.execute('INSERT INTO tweets VALUES (?, ?, ?, ?, ?)', data)
+            self.cursor.execute('INSERT INTO tweets VALUES (?, ?, ?, ?)', data)
             self.conn.commit()
             self.entry_count += 1
         except sqlite3.Error, e:
