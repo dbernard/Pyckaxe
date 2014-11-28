@@ -15,10 +15,16 @@ def monochrome_color_func(word, font_size, position, orientation,
         random_state = Random()
     return 'hsl(0, 0%%, %d%%)' % random_state.randint(0, 50)
 
-def get_word_cloud(db, image):
+def dark_monochrome_color_func(word, font_size, position, orientation,
+                                    random_state=None):
+    if not random_state:
+        random_state = Random()
+    return 'hsl(0, 0%%, %d%%)' % random_state.randint(40, 100)
+
+def get_word_cloud(db, image, color_func, bg_color):
     text = generate_text(db)
     wc = WordCloud(width=1280, height=1024, stopwords=STOPWORDS,
-                   background_color='white', color_func=monochrome_color_func,
+                   background_color=bg_color, color_func=color_func,
                    max_words=100)
 
     wc.generate(text)
@@ -39,6 +45,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--database', help='Provide a database name.')
     parser.add_argument('--name', help='Filename for the wordcloud png.')
+    parser.add_argument('--colorfunc', default='monochrome',
+                help='Provide a color func: "monochrome" or "monochrome-dark"')
 
     args = parser.parse_args()
 
@@ -52,12 +60,22 @@ if __name__ == '__main__':
         name = 'images/%s' % name
         args.name = name
 
+    if args.colorfunc not in ['monochrome', 'monochrome-dark']:
+        args.colorfunc = 'monochrome'
+
+    if args.colorfunc == 'monochrome':
+        bg_color = 'white'
+        args.colorfunc = monochrome_color_func
+    else:
+        bg_color = 'black'
+        args.colorfunc = dark_monochrome_color_func
+
     db = CollectionDatabase(os.path.join(DATABASE_PATH, args.database))
     image_path = os.path.join(os.path.dirname(__file__), args.name)
     print image_path
 
     print 'Generating word cloud...'
-    get_word_cloud(db, image_path)
+    get_word_cloud(db, image_path, args.colorfunc, bg_color)
 
     db.disconnect_db()
     print 'Done. Image saved to %s.' % image_path
