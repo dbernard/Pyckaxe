@@ -1,14 +1,13 @@
 import os
+import argparse
 from databasehandler import CollectionDatabase
 
-DATABASE_PATH = 'database/tweets.db'
-
-db = CollectionDatabase(DATABASE_PATH)
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database/')
 
 STOPWORDS = set([x.strip() for x in open(os.path.join(os.path.dirname(__file__),
                                               'stopwords')).read().split('\n')])
 
-def wordFreq():
+def wordFreq(db):
     words = {}
     tweets = db.get_all_tweet_text()
     for tweet in tweets:
@@ -32,6 +31,16 @@ def wordFreq():
 
 
 if __name__ == '__main__':
-    wordFreq()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--database', help='Provide a database name.')
+
+    args = parser.parse_args()
+
+    if not args.database:
+        args.database = raw_input('Please provide a database name: ')
+
+    db = CollectionDatabase(os.path.join(DATABASE_PATH, args.database))
+
+    wordFreq(db)
 
     db.disconnect_db()

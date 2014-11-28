@@ -36,6 +36,15 @@ class CollectionDatabase(object):
             msg = 'Error saving tweet to database: %s' % str(e)
             raise CollectionDatabaseError(msg)
 
+    def get_all(self):
+        try:
+            self.cursor.execute('SELECT * FROM tweets')
+            results = self.cursor.fetchall()
+            return results
+        except sqlite3.Error, e:
+            msg = 'Error getting all tweets: %s' % str(e)
+            raise CollectionDatabaseError(msg)
+
     def get_all_tweet_text(self):
         try:
             self.cursor.execute('SELECT text FROM tweets')

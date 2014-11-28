@@ -7,6 +7,7 @@ from databasehandler import CollectionDatabase
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
+from httplib import IncompleteRead
 
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database/')
 
@@ -78,11 +79,18 @@ def collect():
     auth.set_access_token(access_token, access_token_secret)
 
     stream = Stream(auth, listener)
-    stream.filter(track=args.terms)
+
+    try:
+        stream.filter(track=args.terms)
+    except IncompleteRead, ir:
+        print '\nEncountered an incomplete read. Attempting to restart stream...'
+        stream = Stream(auth, listener)
+        stream.filter(track=args.terms)
+        print 'Restarted.\n'
 
 
 if __name__ == '__main__':
     try:
-        runtime = collect()
+        collect()
     except KeyboardInterrupt:
         print '\nExiting.'
