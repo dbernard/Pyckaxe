@@ -31,12 +31,10 @@ class CollectListener(StreamListener):
         try:
             data = json.loads(data.strip())
             id = data['id_str']
-            fav_count = data['favorite_count']
-            retweets = data['retweet_count']
             text = data['text'].strip()
+            created_at = data['created_at']
             coords = str(data['coordinates'])
-            user = data['user']
-            self.db.add([id, fav_count, retweets, text, coords])
+            self.db.add([id, text, created_at, coords])
 
             sys.stdout.write('\rTweets collected: %s -- database size: %s kb' %
                                 (self.db.entry_count,
