@@ -20,6 +20,16 @@ access_token = auth['access_token']
 access_token_secret = auth['access_secret']
 
 
+class StdOutListener(StreamListener):
+    # Std Out Listener meant for debugging/testing
+    def on_data(self, data):
+        print data
+        return True
+
+    def on_error(self, status):
+        print status
+
+
 class CollectListener(StreamListener):
     def __init__(self, db):
         super(CollectListener, self).__init__()
