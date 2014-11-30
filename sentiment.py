@@ -24,7 +24,7 @@ POSITIVE_EMOTICONS = [":)", "(:", ":D", ":')", "(':"]
 NEGATIVE_EMOTICONS = [":(", "):", "D:", ":|", ":'(", ")':", "-_-", ":S"]
 
 
-def sentiment_stacked_bars(sentiment, name):
+def sentiment_stacked_bars(sentiment, fname, title):
     creds = auth('credentials.csv')
 
     plotly_username = creds['plotly_username']
@@ -46,11 +46,10 @@ def sentiment_stacked_bars(sentiment, name):
             marker = Marker(color='rgb(255, 0, 0)'))
 
     data = Data([trace1, trace2])
-    layout = Layout(title='Star Wars: The Force Awakens Twitter Sentiment',
-                    barmode='group')
+    layout = Layout(title=title, barmode='group')
     fig  = Figure(data=data, layout=layout)
-    plot_url = py.plot(fig, filename=name)
-    py.image.save_as(fig, 'images/%s.png' % name)
+    plot_url = py.plot(fig, filename=fname)
+    py.image.save_as(fig, 'images/%s.png' % fname)
 
     return plot_url
 
@@ -130,7 +129,8 @@ if __name__ == '__main__':
     sentiment = get_sentiment(db)
 
     if args.plotbars:
-        plot_url = sentiment_stacked_bars(sentiment, args.plotbars)
+        title = raw_input('Graph title: ')
+        plot_url = sentiment_stacked_bars(sentiment, args.plotbars, title)
         print 'Sentiment plotted.\nURL: %s\nImage: %s' % (plot_url,
                                                 'images/%s.png' % args.plotbars)
     else:
