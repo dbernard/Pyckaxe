@@ -21,15 +21,26 @@ more information on creating a new application, see [here](https://dev.twitter.c
    access_secret,YOUR_ACCESS_SECRET_HERE
    ```
 
+   If you are using [Plotly][https://plot.ly/] for any data graphing, include
+   the following lined in the "credentials.csv" file:
+
+   ```
+   plotly_username,YOUR_PLOTLY_USERNAME_HERE
+   plotly_api_key,YOUR_PLOTLY_API_KEY_HERE
+   ```
+
    *Warning: Keep your keys/tokens a secret!*
 
-3. Enter the terms you wish to search for in the collect() function in
-   collect.py. (This will change soon)
+3. From the command line, run collect.py with the terms you wish to collect
+   tweets about:
+    ```
+    python collect.py "YOUR SEARCH TERMS HERE"
+    ```
 
 4. Collect tweets for however long you wish. Tweets collected since running and
    database file size (in KB) will be shown at the command line.
 
-5. Run one of the parsing scripts to parse the data.
+5. Run one of the parsing scripts to parse/graph the data.
 
 
 TODO
