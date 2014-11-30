@@ -1,4 +1,5 @@
 import os
+import string
 import argparse
 from databasehandler import CollectionDatabase
 
@@ -13,9 +14,11 @@ def wordFreq(db):
     for tweet in tweets:
         tweet = [word.lower().strip('\'\"-,.:;!?][)(}{|') for word in tweet[0].split()]
         for word in tweet:
+            # Current word is a stopword
             if word in STOPWORDS:
                 continue
 
+            # Current word is a link
             elif word.startswith('http'):
                 continue
 
