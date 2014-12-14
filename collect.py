@@ -68,6 +68,38 @@ class CollectListener(StreamListener):
         pass
 
 
+class Pyckaxe(object):
+    def __init__(self, database, terms, credentials, err_limit=None):
+        self.db = database
+        self.terms = terms
+
+        consumer_key = credentials['consumer_key']
+        consumer_secret = credentials['consumer_secret']
+
+        access_token = credentials['access_token']
+        access_token_secret = credentials['access_secret']
+
+        self.auth = OAuthHandler(consumer_key,
+                                 consumer_secret).set_access_token(access_token,
+                                                            access_token_secret)
+        self.err_limit = err_limit
+
+    def gather(self):
+        listener = CollectListener(self.db)
+        stream = Stream(self.auth, listener)
+
+        try:
+            stream.filter(track=self.terms)
+        except IncompleteRead, ir:
+            # Incomplete reads occur (as far as the community can tell) when our
+            # stream starts falling behind the live feed.
+            # TODO: Prints should be logs
+            print '\nEncountered an incomplete read. Attempting to restart stream...'
+            stream = Stream(self.auth, listener)
+            stream.filter(track=args.terms)
+            print 'Restarted.\n'
+
+
 def collect():
     parser = argparse.ArgumentParser()
     parser.add_argument('--database', help='Provide a database name.')
