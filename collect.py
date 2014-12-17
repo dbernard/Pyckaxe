@@ -2,12 +2,18 @@ import os
 import sys
 import json
 import argparse
-from auth import auth
+import logging
+from auth import auth as Auth
 from databasehandler import CollectionDatabase
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
 from httplib import IncompleteRead
+
+log = logging.getLogger('pyckaxe')
+log.setLevel(logging.WARNING)
+handler = logging.StreamHandler()
+log.addHandler(handler)
 
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database/')
 
@@ -23,10 +29,11 @@ class StdOutListener(StreamListener):
 
 
 class CollectListener(StreamListener):
-    def __init__(self, db):
+    def __init__(self, db, verbose=False):
         super(CollectListener, self).__init__()
         self.db_path = db
         self.db = CollectionDatabase(self.db_path)
+        self.verbose = verbose
 
     def on_data(self, data):
         # Collecting id, favorite count, retweet number, text, coordinates, and
@@ -39,15 +46,17 @@ class CollectListener(StreamListener):
             coords = str(data['coordinates'])
             self.db.add([id, text, created_at, coords])
 
-            sys.stdout.write('\rTweets collected: %s -- database size: %s kb' %
-                                (self.db.entry_count,
-                                 os.path.getsize(self.db_path) >> 10))
-            sys.stdout.flush()
+            if self.verbose:
+                sys.stdout.write(
+                        '\rTweets collected: %s -- database size: %s kb' %
+                                    (self.db.entry_count,
+                                    os.path.getsize(self.db_path) >> 10))
+                sys.stdout.flush()
 
         except KeyboardInterrupt:
-            print '\nDisconnecting from database...'
+            log.warning('\nDisconnecting from database...')
             self.db.disconnect_db()
-            print 'Done.'
+            log.warning('Done.')
             raise
 
         except KeyError, ke:
@@ -83,14 +92,20 @@ class Pyckaxe(object):
 
         try:
             stream.filter(track=self.terms)
+
         except IncompleteRead, ir:
             # Incomplete reads occur (as far as the community can tell) when our
             # stream starts falling behind the live feed.
-            # TODO: Prints should be logs
-            print '\nEncountered an incomplete read. Attempting to restart stream...'
+            # TODO: Might want to strip logging completely out of Pyckaxe class.
+            log.warning('\nEncountered an incomplete read. ' +
+                                            'Attempting to restart stream.')
             stream = Stream(self.auth, self.listener)
             stream.filter(track=args.terms)
-            print 'Restarted.\n'
+
+        except KeyboardInterrupt:
+            # TODO: Not sure if I want to do something here.
+            raise
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -106,11 +121,11 @@ if __name__ == '__main__':
 
     db = os.path.join(DATABASE_PATH, args.database)
 
-    listener = CollectListener(db)
-    auth = auth('credentials.csv')
+    listener = CollectListener(db, verbose=True)
+    auth = Auth('credentials.csv')
 
     try:
         pyck = Pyckaxe(listener, args.terms, auth)
         pyck.gather()
     except KeyboardInterrupt:
-        print '\nExiting.'
+        log.warning('\nExiting.')
