@@ -11,14 +11,6 @@ from httplib import IncompleteRead
 
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database/')
 
-auth = auth('credentials.csv')
-
-consumer_key = auth['consumer_key']
-consumer_secret = auth['consumer_secret']
-
-access_token = auth['access_token']
-access_token_secret = auth['access_secret']
-
 
 class StdOutListener(StreamListener):
     # Std Out Listener meant for debugging/testing
@@ -69,24 +61,25 @@ class CollectListener(StreamListener):
 
 
 class Pyckaxe(object):
-    def __init__(self, database, terms, credentials, err_limit=None):
-        self.db = database
+    def __init__(self, listener, terms, credentials, err_limit=None):
+        if not isinstance(listener, StreamListener):
+            raise TypeError('Custom listeners must derive from StreamListener.')
+
+        self.listener = listener
         self.terms = terms
 
         consumer_key = credentials['consumer_key']
         consumer_secret = credentials['consumer_secret']
-
         access_token = credentials['access_token']
         access_token_secret = credentials['access_secret']
 
-        self.auth = OAuthHandler(consumer_key,
-                                 consumer_secret).set_access_token(access_token,
-                                                            access_token_secret)
+        self.auth = OAuthHandler(consumer_key, consumer_secret)
+        self.auth.set_access_token(access_token, access_token_secret)
+
         self.err_limit = err_limit
 
     def gather(self):
-        listener = CollectListener(self.db)
-        stream = Stream(self.auth, listener)
+        stream = Stream(self.auth, self.listener)
 
         try:
             stream.filter(track=self.terms)
@@ -95,12 +88,11 @@ class Pyckaxe(object):
             # stream starts falling behind the live feed.
             # TODO: Prints should be logs
             print '\nEncountered an incomplete read. Attempting to restart stream...'
-            stream = Stream(self.auth, listener)
+            stream = Stream(self.auth, self.listener)
             stream.filter(track=args.terms)
             print 'Restarted.\n'
 
-
-def collect():
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--database', help='Provide a database name.')
 
@@ -115,22 +107,10 @@ def collect():
     db = os.path.join(DATABASE_PATH, args.database)
 
     listener = CollectListener(db)
-    auth = OAuthHandler(consumer_key, consumer_secret)
-    auth.set_access_token(access_token, access_token_secret)
-
-    stream = Stream(auth, listener)
+    auth = auth('credentials.csv')
 
     try:
-        stream.filter(track=args.terms)
-    except IncompleteRead, ir:
-        print '\nEncountered an incomplete read. Attempting to restart stream...'
-        stream = Stream(auth, listener)
-        stream.filter(track=args.terms)
-        print 'Restarted.\n'
-
-
-if __name__ == '__main__':
-    try:
-        collect()
+        pyck = Pyckaxe(listener, args.terms, auth)
+        pyck.gather()
     except KeyboardInterrupt:
         print '\nExiting.'

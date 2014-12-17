@@ -1,7 +1,9 @@
 import sqlite3
 
+
 class CollectionDatabaseError(Exception):
     pass
+
 
 class CollectionDatabase(object):
     def __init__(self, db):
