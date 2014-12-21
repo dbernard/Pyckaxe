@@ -96,9 +96,6 @@ class Pyckaxe(object):
         except IncompleteRead, ir:
             # Incomplete reads occur (as far as the community can tell) when our
             # stream starts falling behind the live feed.
-            # TODO: Might want to strip logging completely out of Pyckaxe class.
-            log.warning('\nEncountered an incomplete read. ' +
-                                            'Attempting to restart stream.')
             stream = Stream(self.auth, self.listener)
             stream.filter(track=args.terms)
 
