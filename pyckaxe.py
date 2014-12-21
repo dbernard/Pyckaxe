@@ -18,6 +18,10 @@ log.addHandler(handler)
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'database/')
 
 
+class PyckaxeException(Exception):
+    pass
+
+
 class StdOutListener(StreamListener):
     # Std Out Listener meant for debugging/testing
     def on_data(self, data):
@@ -102,6 +106,10 @@ class Pyckaxe(object):
         except KeyboardInterrupt:
             # TODO: Not sure if I want to do something here.
             raise
+
+        except Exception, e:
+            raise PyckaxeException('Encountered an unexpected error - %s' %
+                                        str(e))
 
 
 if __name__ == '__main__':
