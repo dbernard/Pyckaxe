@@ -4,11 +4,12 @@ import json
 import argparse
 import logging
 from auth import auth as Auth
-from databasehandler import CollectionDatabase
+from databasehandler import CollectionDatabaseWriter
 from tweepy import OAuthHandler
 from tweepy import Stream
 from tweepy.streaming import StreamListener
 from httplib import IncompleteRead
+from time import sleep
 
 log = logging.getLogger('pyckaxe')
 log.setLevel(logging.WARNING)
@@ -36,12 +37,14 @@ class CollectListener(StreamListener):
     def __init__(self, db, verbose=False):
         super(CollectListener, self).__init__()
         self.db_path = db
-        self.db = CollectionDatabase(self.db_path)
+        self.db = CollectionDatabaseWriter(self.db_path)
         self.verbose = verbose
 
+    def close(self):
+        self.db.disconnect_db()
+
     def on_data(self, data):
-        # Collecting id, favorite count, retweet number, text, coordinates, and
-        # user.
+        # Collecting id, text, creation time, and coordinates
         try:
             data = json.loads(data.strip())
             id = data['id_str']
@@ -56,12 +59,6 @@ class CollectListener(StreamListener):
                                     (self.db.entry_count,
                                     os.path.getsize(self.db_path) >> 10))
                 sys.stdout.flush()
-
-        except KeyboardInterrupt:
-            log.warning('\nDisconnecting from database...')
-            self.db.disconnect_db()
-            log.warning('Done.')
-            raise
 
         except KeyError, ke:
             pass
@@ -90,26 +87,43 @@ class Pyckaxe(object):
         self.auth.set_access_token(access_token, access_token_secret)
 
         self.err_limit = err_limit
+        self.stream = None
 
-    def gather(self):
-        stream = Stream(self.auth, self.listener)
+    def gather(self, async=False):
+        '''
+        Gather tweets from the Twitter public stream. The data is handled by the
+        listener provided by the user.
+
+        Setting async to True will collect tweets asynchronously and require the
+        stop method to be called to end collection.
+        '''
+        self.stream = Stream(self.auth, self.listener)
 
         try:
-            stream.filter(track=self.terms)
+            self.stream.filter(track=self.terms, async=async)
 
         except IncompleteRead, ir:
             # Incomplete reads occur (as far as the community can tell) when our
             # stream starts falling behind the live feed.
-            stream = Stream(self.auth, self.listener)
-            stream.filter(track=args.terms)
+            self.stream = Stream(self.auth, self.listener)
+            self.stream.filter(track=args.terms)
 
         except KeyboardInterrupt:
-            # TODO: Not sure if I want to do something here.
+            self.stream.disconnect()
             raise
 
         except Exception, e:
             raise PyckaxeException('Encountered an unexpected error - %s' %
                                         str(e))
+
+    def stop(self):
+        '''
+        Stop the stream. Note that this will only be usable/relevant if we are
+        gathering tweets asynchronously.
+
+        This does NOT handle releasing of custom listeners.
+        '''
+        self.stream.disconnect()
 
 
 if __name__ == '__main__':
@@ -132,5 +146,11 @@ if __name__ == '__main__':
     try:
         pyck = Pyckaxe(listener, args.terms, auth)
         pyck.gather()
+        #sleep(10)
+        #pyck.stop()
+        #pyck.listener.close()
     except KeyboardInterrupt:
-        log.warning('\nExiting.')
+        # Can't do this from Pyckaxe if we're going to allow custom listeners.
+        pyck.listener.close()
+
+    log.warning('\nExiting.')
