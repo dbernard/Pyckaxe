@@ -146,9 +146,6 @@ if __name__ == '__main__':
     try:
         pyck = Pyckaxe(listener, args.terms, auth)
         pyck.gather()
-        #sleep(10)
-        #pyck.stop()
-        #pyck.listener.close()
     except KeyboardInterrupt:
         # Can't do this from Pyckaxe if we're going to allow custom listeners.
         pyck.listener.close()

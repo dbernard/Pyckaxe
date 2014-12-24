@@ -66,7 +66,7 @@ class CollectionDatabaseWriter(object):
 
 #TODO: Make sure the below works.
 class CollectionDatabaseReader(object):
-    def __init__(self):
+    def __init__(self, db):
         self.conn = None
         self.cursor = None
         self.connect_db(db)
