@@ -1,13 +1,72 @@
 import sqlite3
+import threading
+import Queue
 
 
 class CollectionDatabaseError(Exception):
     pass
 
 
-class CollectionDatabase(object):
+class CollectionDatabaseWriter(object):
     def __init__(self, db):
+        self._close = threading.Event()
+        self._db_path = db
+        self.dataq = Queue.Queue()
         self.entry_count = 0
+        self._data_thread = self._start_thread()
+
+    def _start_thread(self):
+        t = threading.Thread(target=self._check_for_data)
+        t.start()
+        return t
+
+    def _check_for_data(self):
+        conn, cursor = self.connect_db(self._db_path)
+        while not self._close.isSet():
+            # Add tweet data to our database. Error if we can't save a tweet
+            try:
+                data = self.dataq.get(timeout=1)
+                self.dataq.task_done()
+                cursor.execute('INSERT INTO tweets VALUES (?, ?, ?, ?)', data)
+                conn.commit()
+                self.entry_count += 1
+
+            except Queue.Empty:
+                pass
+
+            except sqlite3.Error, e:
+                msg = 'Error saving tweet to database: %s' % str(e)
+                raise CollectionDatabaseError(msg)
+
+        conn.commit()
+        conn.close()
+
+    def connect_db(self, name):
+        # Create the database if it does not exist
+        conn = sqlite3.connect(name)
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS tweets (
+                                id INTEGER,
+                                text TEXT,
+                                created_at TEXT,
+                                coords TEXT)''')
+        conn.commit()
+
+        return conn, cursor
+
+    def disconnect_db(self):
+        self.dataq.join()
+        self._close.set()
+        if self._data_thread.is_alive():
+            self._data_thread.join()
+
+    def add(self, data):
+        self.dataq.put(data)
+
+
+#TODO: Make sure the below works.
+class CollectionDatabaseReader(object):
+    def __init__(self, db):
         self.conn = None
         self.cursor = None
         self.connect_db(db)
@@ -26,16 +85,6 @@ class CollectionDatabase(object):
     def disconnect_db(self):
         self.conn.commit()
         self.conn.close()
-
-    def add(self, data):
-        # Add tweet data to our database. Error if we can't save a tweet
-        try:
-            self.cursor.execute('INSERT INTO tweets VALUES (?, ?, ?, ?)', data)
-            self.conn.commit()
-            self.entry_count += 1
-        except sqlite3.Error, e:
-            msg = 'Error saving tweet to database: %s' % str(e)
-            raise CollectionDatabaseError(msg)
 
     def get_all(self):
         try:
