@@ -9,6 +9,8 @@ and [Tweepy](http://www.tweepy.org/).
 
 
 ### Important Notes
+* **THIS IS A WORK IN PROGRESS.** Things need cleaned up, commented, and
+  evaluated for performance. Keep this in mind!
 
 * **Performance:** This is a work in progress. There are various performance and
   parsing improvements to be made!
