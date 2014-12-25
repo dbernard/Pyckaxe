@@ -45,7 +45,7 @@ more information on creating a new application, see [here](https://dev.twitter.c
    access_secret,YOUR_ACCESS_SECRET_HERE
    ```
 
-   If you are using [Plotly][https://plot.ly/] for any data graphing, include
+   If you are using [Plotly](https://plot.ly/) for any data graphing, include
    the following lines in the "credentials.csv" file:
 
    ```
