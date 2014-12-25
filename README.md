@@ -148,16 +148,16 @@ provided by your `filename` argument.
 
 #### Graphing: Sentiment Analysis
 
-**IMPORTANT:** *This is a *VERY* naive implementation of sentiment
+**IMPORTANT:** *This is a* **VERY** *naive implementation of sentiment
 analysis. Sentiment analysis is a very complex subject, and I have no
-intention of covering all the intricacies involved.
+intention of covering all the intricacies involved.*
 
-Instead, this project employs more of a "shotgun" approach - While this
+*Instead, this project employs more of a "shotgun" approach - While this
 implementation of sentiment analysis may not be very accurate for a small
 amount of information, the hope is that with very large sets of information we
-will get a generally accurate result.
+will get a generally accurate result.*
 
-We also currently only support English language input. **Be warned,** this
+*We also currently only support English language input.* **Be warned,** *this
 results in a lot of neutral results (for example, a Spanish language tweet
 will be classified as neutral, regardless of what it says), so use the neutral
 result at your own risk.*
