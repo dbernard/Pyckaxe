@@ -30,10 +30,23 @@ class WordCloudBuilder(object):
         # data should be a string
         self.text.append(data)
 
-    def generate_wordcloud(self, filename, bg_color='white',
-                                            color_func=monochrome_color_func):
+    def generate_wordcloud(self, filename, bg_color='white', stopwords=STOPWORDS,
+                            color_func=monochrome_color_func, xtra_stopwords=[]):
         text = ' '.join(self.text)
-        wc = WordCloud(width=1280, height=1024, stopwords=STOPWORDS,
+
+        # These extra stopwords exist for cases where we want to ignore words
+        # specific to one scenario - in other words, ignore words we may NOT
+        # want to add to our base stopwords set or ignore normally.
+        if xtra_stopwords:
+            for word in xtra_stopwords:
+                # stopwords is a set...
+                if isinstance(stopwords, set):
+                    stopwords.add(word)
+                # Otherwise assume its a list
+                else:
+                    stopwords.append(word)
+
+        wc = WordCloud(width=1280, height=1024, stopwords=stopwords,
                    background_color=bg_color, color_func=color_func,
                    max_words=100)
 
@@ -41,7 +54,7 @@ class WordCloudBuilder(object):
         wc.to_file(filename)
 
 
-def createWordcloud(db, filename, bg_color='white',
+def createWordcloud(db, filename, bg_color='white', xtra_stopwords=[],
                                         color_func=monochrome_color_func):
     # TODO: make sure db is default listener derived
     wc = WordCloudBuilder()
@@ -49,7 +62,8 @@ def createWordcloud(db, filename, bg_color='white',
     for tweet in tweets:
         wc.add_data(tweet[0])
 
-    wc.generate_wordcloud(filename, bg_color, color_func)
+    wc.generate_wordcloud(filename, bg_color=bg_color, color_func=color_func,
+            xtra_stopwords=xtra_stopwords)
 
 
 if __name__ == '__main__':
@@ -57,6 +71,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--database', help='Provide a database name.')
     parser.add_argument('--name', help='Filename for the wordcloud png.')
+    parser.add_argument('--xtrastopwords', default=[],
+                help='Ignore these words in addition to your default stopwords.'\
+                        ' All words should be in one set of quotes and each '\
+                        'word separated by a space.')
     parser.add_argument('--colorfunc', default='monochrome',
                 help='Provide a color func: "monochrome" or "monochrome-dark"')
 
@@ -72,6 +90,9 @@ if __name__ == '__main__':
         name = 'images/%s' % name
         args.name = name
 
+    if args.xtrastopwords:
+        args.xtrastopwords = args.xtrastopwords.split(' ')
+
     if args.colorfunc not in ['monochrome', 'monochrome-dark']:
         args.colorfunc = 'monochrome'
 
@@ -86,7 +107,7 @@ if __name__ == '__main__':
     image_path = os.path.join(os.path.dirname(__file__), args.name)
 
     print 'Generating word cloud...'
-    createWordcloud(db, image_path, bg_color, args.colorfunc)
+    createWordcloud(db, image_path, bg_color, args.xtrastopwords, args.colorfunc)
 
     db.disconnect_db()
     print 'Done. Image saved to %s.' % image_path
