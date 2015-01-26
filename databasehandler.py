@@ -95,6 +95,15 @@ class CollectionDatabaseReader(object):
             msg = 'Error getting all tweets: %s' % str(e)
             raise CollectionDatabaseError(msg)
 
+    def get_all_timestamps(self):
+        try:
+            self.cursor.execute('SELECT created_at FROM tweets')
+            times = self.cursor.fetchall()
+            return times
+        except sqlite3.Error, e:
+            msg = 'Error getting all timestamps: %s' % str(e)
+            raise CollectionDatabaseError(msg)
+
     def get_all_tweet_text(self):
         try:
             self.cursor.execute('SELECT text FROM tweets')
