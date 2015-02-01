@@ -144,7 +144,7 @@ if __name__ == '__main__':
     auth = Auth('credentials.csv')
 
     try:
-        pyck = Pyckaxe(listener, args.terms, auth)
+        pyck = Pyckaxe(listener, args.terms[0].split(), auth)
         pyck.gather()
     except KeyboardInterrupt:
         # Can't do this from Pyckaxe if we're going to allow custom listeners.
